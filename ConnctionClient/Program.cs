@@ -2,7 +2,7 @@
 using System.Net;
 using System.Text;
 
-namespace VpnClient
+namespace ConnctionClient
 {
     internal class Program
     {
@@ -16,45 +16,24 @@ namespace VpnClient
         private static string _sendMessage { get; set; }
         private static string _recivedMessage { get; set; }
 
-        private static CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private static CancellationToken _token = _cancellationTokenSource.Token;
-
         static async Task Main(string[] args)
         {
             ConnectToServer();
             Task.Run(() =>
             {
-                KeepConnectAlive();
-            });
-            Task.Run(() =>
-            {
                 GetMessages();
             });
+            Console.Write("input pc name: ");
+            _sendMessage = Console.ReadLine();
+            SendMessage(_sendMessage, _connctionEndPoint);
             Console.ReadLine();
         }
 
         private static async Task ConnectToServer()
         {
             var name = Environment.MachineName.ToLower();
-            byte[] pcName = Encoding.UTF8.GetBytes($"ClientName {name}1");
+            byte[] pcName = Encoding.UTF8.GetBytes($"ClientName {name}");
             await _udpClient.SendAsync(pcName, _connctionEndPoint);
-        }
-
-        private static async Task KeepConnectAlive()
-        {
-            try
-            {
-                while (!_token.IsCancellationRequested)
-                {
-                    //_udpClient.SendAsync(new byte[] { 0 }, _connctionEndPoint);
-                    _udpClient.SendAsync(Encoding.UTF8.GetBytes("Hello From Client"), _connctionEndPoint);
-                    Thread.Sleep(20000);
-                };
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
         }
 
         private static async Task SendMessage(string message)
@@ -67,35 +46,17 @@ namespace VpnClient
             await _udpClient.SendAsync(Encoding.UTF8.GetBytes(message), endpoint);
         }
 
-        private static async void SendDataMessage(string data, IPEndPoint endPoint)
-        {
-            while(true)
-            {
-                await _udpClient.SendAsync(Encoding.UTF8.GetBytes(data), endPoint);
-                Thread.Sleep(3000);
-            }
-        }
-
         private static async Task GetMessages()
         {
             try
             {
-                while (!_token.IsCancellationRequested)
+                while (true)
                 {
                     _receiveMessageResult = await _udpClient.ReceiveAsync();
                     if (_receiveMessageResult.Buffer != null)
                     {
                         _recivedMessage = Encoding.UTF8.GetString(_receiveMessageResult.Buffer);
-                        if(_recivedMessage == "Ready")
-                        {
-                            Console.WriteLine(_recivedMessage);
-                            _cancellationTokenSource.Cancel();
-                            Thread sendData = new Thread(() => 
-                            {
-                                SendDataMessage("Hello", _messageEndPoint);
-                            });
-                            sendData.Start();
-                        }
+                        Console.WriteLine(_recivedMessage);
                     }
                 }
             }

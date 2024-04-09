@@ -5,22 +5,42 @@ VisualStudioVersion = 17.8.34322.80
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalVpn", "LocalVpn\LocalVpn.csproj", "{323B7F5E-E3BC-435E-980C-225AAC15F201}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VpnClient", "VpnClient\VpnClient.csproj", "{4027C43D-9197-4310-9102-358A7D391C2D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VpnClient", "VpnClient\VpnClient.csproj", "{4027C43D-9197-4310-9102-358A7D391C2D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConnctionClient", "ConnctionClient\ConnctionClient.csproj", "{3340066E-EC36-45CC-A515-DD6D3B8A52E2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{323B7F5E-E3BC-435E-980C-225AAC15F201}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{323B7F5E-E3BC-435E-980C-225AAC15F201}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{323B7F5E-E3BC-435E-980C-225AAC15F201}.Debug|x86.ActiveCfg = Debug|x86
+		{323B7F5E-E3BC-435E-980C-225AAC15F201}.Debug|x86.Build.0 = Debug|x86
 		{323B7F5E-E3BC-435E-980C-225AAC15F201}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{323B7F5E-E3BC-435E-980C-225AAC15F201}.Release|Any CPU.Build.0 = Release|Any CPU
+		{323B7F5E-E3BC-435E-980C-225AAC15F201}.Release|x86.ActiveCfg = Release|x86
+		{323B7F5E-E3BC-435E-980C-225AAC15F201}.Release|x86.Build.0 = Release|x86
 		{4027C43D-9197-4310-9102-358A7D391C2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4027C43D-9197-4310-9102-358A7D391C2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4027C43D-9197-4310-9102-358A7D391C2D}.Debug|x86.ActiveCfg = Debug|x86
+		{4027C43D-9197-4310-9102-358A7D391C2D}.Debug|x86.Build.0 = Debug|x86
 		{4027C43D-9197-4310-9102-358A7D391C2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4027C43D-9197-4310-9102-358A7D391C2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4027C43D-9197-4310-9102-358A7D391C2D}.Release|x86.ActiveCfg = Release|x86
+		{4027C43D-9197-4310-9102-358A7D391C2D}.Release|x86.Build.0 = Release|x86
+		{3340066E-EC36-45CC-A515-DD6D3B8A52E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3340066E-EC36-45CC-A515-DD6D3B8A52E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3340066E-EC36-45CC-A515-DD6D3B8A52E2}.Debug|x86.ActiveCfg = Debug|x86
+		{3340066E-EC36-45CC-A515-DD6D3B8A52E2}.Debug|x86.Build.0 = Debug|x86
+		{3340066E-EC36-45CC-A515-DD6D3B8A52E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3340066E-EC36-45CC-A515-DD6D3B8A52E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3340066E-EC36-45CC-A515-DD6D3B8A52E2}.Release|x86.ActiveCfg = Release|x86
+		{3340066E-EC36-45CC-A515-DD6D3B8A52E2}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
