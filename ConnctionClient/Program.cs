@@ -7,9 +7,12 @@ namespace ConnctionClient
 {
     internal class Program
     {
-        private static string _ip = Resource.ip;
-        private static int _connctionPort = int.Parse(Resource.inport);
-        private static int _messagePort = int.Parse(Resource.outport);
+        //private static string _ip = Resource.ip;
+        //private static int _connctionPort = int.Parse(Resource.inport);
+        //private static int _messagePort = int.Parse(Resource.outport);
+        private static string _ip = "93.84.86.45";
+        private static int _connctionPort = 40040;
+        private static int _messagePort = 40041;
         private static IPEndPoint _connctionEndPoint = new IPEndPoint(IPAddress.Parse(_ip), _connctionPort);
         private static IPEndPoint _messageEndPoint = new IPEndPoint(IPAddress.Parse(_ip), _messagePort);
         private static UdpClient _udpClient = new UdpClient();
@@ -24,6 +27,8 @@ namespace ConnctionClient
             {
                 GetMessages();
             });
+            while (_recivedMessage == null)
+                continue;
             Console.Write("input pc name: ");
             _sendMessage = Console.ReadLine();
             SendMessage(_sendMessage, _connctionEndPoint);
@@ -32,7 +37,8 @@ namespace ConnctionClient
 
         private static async Task ConnectToServer()
         {
-            var name = Environment.MachineName.ToLower();
+            var name = Console.ReadLine();
+            //var name = Environment.MachineName.ToLower();
             byte[] pcName = Encoding.UTF8.GetBytes($"ClientName {name}");
             await _udpClient.SendAsync(pcName, _connctionEndPoint);
         }
@@ -68,7 +74,7 @@ namespace ConnctionClient
                     _receiveMessageResult = await _udpClient.ReceiveAsync();
                     if (_receiveMessageResult.Buffer != null)
                     {
-                        _recivedMessage = ByteArrayToObject(_receiveMessageResult.Buffer);
+                        _recivedMessage = Encoding.UTF8.GetString(_receiveMessageResult.Buffer);
                         Console.WriteLine(_recivedMessage);
                     }
                 }

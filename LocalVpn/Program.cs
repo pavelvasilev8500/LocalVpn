@@ -22,9 +22,9 @@ namespace LocalVpn
 
         private static StreamWriter _streamWriter = new StreamWriter(PATH, true);
 
-        //name [[ip][port]]
+        //name [[inuse][ip][port]]
         private static Dictionary<string, string[]> _clients = new Dictionary<string, string[]>();
-        private static Dictionary<string, string[]> _clientServer = new Dictionary<string, string[]>();
+        private static Dictionary<string, ServerModel> _clientServer = new Dictionary<string, ServerModel>();
         private static string _receivedData { get; set; }
         private static string _clientName { get; set; }
         private static IPEndPoint _clientEndPoint { get; set; }
@@ -42,12 +42,6 @@ namespace LocalVpn
             });
             conncetionThread.Name = "GetConnectionThread";
             conncetionThread.Start();
-            var messageThread = new Thread(() =>
-            {
-                GetMessages();
-            });
-            messageThread.Name = "GetMessageThread";
-            messageThread.Start();
             Console.ReadLine();
             _streamWriter.WriteLine("------------------------------------------------\nEnd");
             _streamWriter.Flush();
@@ -85,7 +79,8 @@ namespace LocalVpn
                                 _streamWriter.WriteLine($"Connected Name: {_clientName} IpPort: {_receiveConnectionResult.RemoteEndPoint}");
                                 _streamWriter.Flush();
                                 Console.WriteLine($"Connected Name: {_clientName} IpPort: {_receiveConnectionResult.RemoteEndPoint}");
-                                await _udpConnectionClient.SendAsync(ObjectToByteArray(_clientServer), _receiveConnectionResult.RemoteEndPoint);
+                                foreach (var o in _clientServer)
+                                    await _udpConnectionClient.SendAsync(Encoding.UTF8.GetBytes(o.Key), _receiveConnectionResult.RemoteEndPoint);
                             }
                         }
                         #endregion
@@ -105,7 +100,12 @@ namespace LocalVpn
                             }
                             if (_canClientAdd)
                             {
-                                _clientServer.Add(_clientName, _receiveConnectionResult.RemoteEndPoint.ToString().Split(':'));
+                                var server = new ServerModel()
+                                {
+                                    IpPort = _receiveConnectionResult.RemoteEndPoint.ToString().Split(':'),
+                                    CanAccess = true
+                                };
+                                _clientServer.Add(_clientName, server);
                                 _streamWriter.WriteLine($"Connected Name: {_clientName} IpPort: {_receiveConnectionResult.RemoteEndPoint}");
                                 _streamWriter.Flush();
                                 Console.WriteLine($"Connected Name: {_clientName} IpPort: {_receiveConnectionResult.RemoteEndPoint}");
@@ -116,28 +116,40 @@ namespace LocalVpn
                         {
                             foreach(var o in _clientServer)
                             {
-                                if (o.Value[0] == _receiveConnectionResult.RemoteEndPoint.ToString().Split(':')[0] & 
-                                    o.Value[1] == _receiveConnectionResult.RemoteEndPoint.ToString().Split(':')[1])
+                                if (o.Value.IpPort[0] == _receiveConnectionResult.RemoteEndPoint.ToString().Split(':')[0] &
+                                    o.Value.IpPort[1] == _receiveConnectionResult.RemoteEndPoint.ToString().Split(':')[1])
                                 {
+                                    _clientEndPoint = _receiveConnectionResult.RemoteEndPoint;
                                     _streamWriter.WriteLine($"Message from {o.Key}: {_receivedData}");
                                     _streamWriter.Flush();
                                     Console.WriteLine($"Message from {o.Key}: {_receivedData}");
                                 }
                                 if(o.Key == _receivedData)
                                 {
-                                    _clientEndPoint = _receiveConnectionResult.RemoteEndPoint;
-                                    try
+                                    if(o.Value.CanAccess)
                                     {
-                                        _streamWriter.WriteLine($"Send READY to {o.Key} {o.Value[0]}:{o.Value[1]}");
-                                        _streamWriter.Flush();
-                                        await _udpConnectionClient.SendAsync(Encoding.UTF8.GetBytes("Ready"),
-                                            new IPEndPoint(IPAddress.Parse(o.Value[0]), int.Parse(o.Value[1])));
+                                        try
+                                        {
+                                            _streamWriter.WriteLine($"Send READY to {o.Key} {o.Value.IpPort[0]}:{o.Value.IpPort[1]}");
+                                            _streamWriter.Flush();
+                                            await _udpConnectionClient.SendAsync(Encoding.UTF8.GetBytes("Ready"),
+                                                new IPEndPoint(IPAddress.Parse(o.Value.IpPort[0]), int.Parse(o.Value.IpPort[1])));
+                                            var messageThread = new Thread(() =>
+                                            {
+                                                GetMessages(_udpConnectionClient, _clientEndPoint);
+                                            });
+                                            messageThread.Start();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _streamWriter.WriteLine($"Error while sending READY to {o.Key} {o.Value.IpPort[0]}:{o.Value.IpPort[1]}\n{ex.Message}");
+                                            _streamWriter.Flush();
+                                            Console.WriteLine($"EX: {ex.Message}");
+                                        }
                                     }
-                                    catch (Exception ex)
+                                    else
                                     {
-                                        _streamWriter.WriteLine($"Error while sending READY to {o.Key} {o.Value[0]}:{o.Value[1]}\n{ex.Message}");
-                                        _streamWriter.Flush();
-                                        Console.WriteLine($"EX: {ex.Message}");
+                                        await _udpConnectionClient.SendAsync(Encoding.UTF8.GetBytes("Can not access"), _clientEndPoint);
                                     }
                                 }
                             }
@@ -163,9 +175,8 @@ namespace LocalVpn
             }
         }
 
-        private static async void GetMessages()
+        private static async void GetMessages(UdpClient udpSendClient, IPEndPoint clientEndPoint)
         {
-            _udpSendClent = _udpConnectionClient;
             try
             {
                 while (true)
@@ -176,7 +187,7 @@ namespace LocalVpn
                         _streamWriter.WriteLine($"Message: {Encoding.UTF8.GetString(_receiveMessageResult.Buffer)} From {_receiveMessageResult.RemoteEndPoint}");
                         _streamWriter.Flush();
                         Console.WriteLine($"Message: {Encoding.UTF8.GetString(_receiveMessageResult.Buffer)}");
-                        await _udpSendClent.SendAsync(_receiveMessageResult.Buffer, _clientEndPoint);
+                        await udpSendClient.SendAsync(_receiveMessageResult.Buffer, clientEndPoint);
                     }
                 }
             }
