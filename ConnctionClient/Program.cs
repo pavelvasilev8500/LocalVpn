@@ -27,8 +27,6 @@ namespace ConnctionClient
             {
                 GetMessages();
             });
-            while (_recivedMessage == null)
-                continue;
             Console.Write("input pc name: ");
             _sendMessage = Console.ReadLine();
             SendMessage(_sendMessage, _connctionEndPoint);
