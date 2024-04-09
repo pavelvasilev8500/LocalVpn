@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
 namespace LocalVpn
@@ -12,6 +13,7 @@ namespace LocalVpn
 
         private static UdpClient _udpConnectionClient = new UdpClient(_connctionPort);
         private static UdpClient _udpMessageClient = new UdpClient(_messagePort);
+        private static UdpClient _udpSendClent;
 
         private static UdpReceiveResult _receiveConnectionResult;
         private static UdpReceiveResult _receiveMessageResult;
@@ -22,11 +24,12 @@ namespace LocalVpn
 
         //name [[ip][port]]
         private static Dictionary<string, string[]> _clients = new Dictionary<string, string[]>();
-        private static string _receivedData {get;set;}
+        private static Dictionary<string, string[]> _clientServer = new Dictionary<string, string[]>();
+        private static string _receivedData { get; set; }
         private static string _clientName { get; set; }
         private static IPEndPoint _clientEndPoint { get; set; }
-        private static bool _canAdd { get; set; } = true;
-
+        private static bool _canClientAdd { get; set; } = true;
+        private static bool _canServerAdd { get; set; } = true;
         static async Task Main(string[] args)
         {
             _streamWriter.WriteLine($"{DateTime.Now}");
@@ -56,34 +59,62 @@ namespace LocalVpn
             {
                 while (true)
                 {
+                    _canClientAdd = true;
+                    _canServerAdd = true;
                     _receiveConnectionResult = await _udpConnectionClient.ReceiveAsync();
                     if (_receiveConnectionResult.Buffer != null)
                     {
                         _receivedData = Encoding.UTF8.GetString(_receiveConnectionResult.Buffer);
-                        if(_receivedData.Contains("ClientName"))
+                        #region Client Reg Region
+                        if (_receivedData.Contains("ClientName"))
                         {
                             _clientName = _receivedData.Split(' ')[1];
                             foreach (var o in _clients)
                             {
                                 if (o.Key == _clientName)
                                 {
-                                    _canAdd = false;
+                                    _canClientAdd = false;
                                     _streamWriter.WriteLine($"Имя занято! Имя: {_clientName}");
                                     _streamWriter.Flush();
                                     Console.WriteLine($"Имя занято!");
                                 }
                             }
-                            if(_canAdd)
+                            if(_canClientAdd)
                             {
                                 _clients.Add(_clientName, _receiveConnectionResult.RemoteEndPoint.ToString().Split(':'));
                                 _streamWriter.WriteLine($"Connected Name: {_clientName} IpPort: {_receiveConnectionResult.RemoteEndPoint}");
                                 _streamWriter.Flush();
                                 Console.WriteLine($"Connected Name: {_clientName} IpPort: {_receiveConnectionResult.RemoteEndPoint}");
+                                await _udpConnectionClient.SendAsync(ObjectToByteArray(_clientServer), _receiveConnectionResult.RemoteEndPoint);
                             }
                         }
-                        else if(_receivedData != "\0")
+                        #endregion
+                        #region Server Reg Region
+                        else if (_receivedData.Contains("ServerName"))
                         {
-                            foreach(var o in _clients)
+                            _clientName = _receivedData.Split(' ')[1];
+                            foreach (var o in _clientServer)
+                            {
+                                if (o.Key == _clientName)
+                                {
+                                    _canServerAdd = false;
+                                    _streamWriter.WriteLine($"Имя занято! Имя: {_clientName}");
+                                    _streamWriter.Flush();
+                                    Console.WriteLine($"Имя занято!");
+                                }
+                            }
+                            if (_canClientAdd)
+                            {
+                                _clientServer.Add(_clientName, _receiveConnectionResult.RemoteEndPoint.ToString().Split(':'));
+                                _streamWriter.WriteLine($"Connected Name: {_clientName} IpPort: {_receiveConnectionResult.RemoteEndPoint}");
+                                _streamWriter.Flush();
+                                Console.WriteLine($"Connected Name: {_clientName} IpPort: {_receiveConnectionResult.RemoteEndPoint}");
+                            }
+                        }
+                        #endregion
+                        else if (_receivedData != "\0")
+                        {
+                            foreach(var o in _clientServer)
                             {
                                 if (o.Value[0] == _receiveConnectionResult.RemoteEndPoint.ToString().Split(':')[0] & 
                                     o.Value[1] == _receiveConnectionResult.RemoteEndPoint.ToString().Split(':')[1])
@@ -122,8 +153,19 @@ namespace LocalVpn
             }
         }
 
+        public static byte[] ObjectToByteArray(Object obj)
+        {
+            BinaryFormatter bf = new BinaryFormatter();
+            using (var ms = new MemoryStream())
+            {
+                bf.Serialize(ms, obj);
+                return ms.ToArray();
+            }
+        }
+
         private static async void GetMessages()
         {
+            _udpSendClent = _udpConnectionClient;
             try
             {
                 while (true)
@@ -134,7 +176,7 @@ namespace LocalVpn
                         _streamWriter.WriteLine($"Message: {Encoding.UTF8.GetString(_receiveMessageResult.Buffer)} From {_receiveMessageResult.RemoteEndPoint}");
                         _streamWriter.Flush();
                         Console.WriteLine($"Message: {Encoding.UTF8.GetString(_receiveMessageResult.Buffer)}");
-                        await _udpMessageClient.SendAsync(_receiveMessageResult.Buffer, _clientEndPoint);
+                        await _udpSendClent.SendAsync(_receiveMessageResult.Buffer, _clientEndPoint);
                     }
                 }
             }

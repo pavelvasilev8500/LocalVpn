@@ -13,7 +13,6 @@ namespace VpnClient
         private static IPEndPoint _messageEndPoint = new IPEndPoint(IPAddress.Parse(_ip), _messagePort);
         private static UdpClient _udpClient = new UdpClient();
         private static UdpReceiveResult _receiveMessageResult;
-        private static string _sendMessage { get; set; }
         private static string _recivedMessage { get; set; }
 
         private static CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -36,7 +35,7 @@ namespace VpnClient
         private static async Task ConnectToServer()
         {
             var name = Environment.MachineName.ToLower();
-            byte[] pcName = Encoding.UTF8.GetBytes($"ClientName {name}1");
+            byte[] pcName = Encoding.UTF8.GetBytes($"ServerName {name}");
             await _udpClient.SendAsync(pcName, _connctionEndPoint);
         }
 
