@@ -18,16 +18,18 @@ namespace VpnClient
         private static UdpReceiveResult _receiveMessageResult;
         private static string _recivedMessage { get; set; }
 
+        private static string ServerName { get; set; }
+
         private static CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private static CancellationToken _token = _cancellationTokenSource.Token;
 
         static async Task Main(string[] args)
         {
             ConnectToServer();
-            Task.Run(() =>
-            {
-                KeepConnectAlive();
-            });
+            //Task.Run(() =>
+            //{
+            //    KeepConnectAlive();
+            //});
             Task.Run(() =>
             {
                 GetMessages();
@@ -37,9 +39,9 @@ namespace VpnClient
 
         private static async Task ConnectToServer()
         {
-            var name = Console.ReadLine();
+            ServerName = Console.ReadLine();
             //var name = Environment.MachineName.ToLower();
-            byte[] pcName = Encoding.UTF8.GetBytes($"ServerName {name}");
+            byte[] pcName = Encoding.UTF8.GetBytes($"ServerName {ServerName}");
             await _udpClient.SendAsync(pcName, _connctionEndPoint);
         }
 
@@ -89,13 +91,14 @@ namespace VpnClient
                     if (_receiveMessageResult.Buffer != null)
                     {
                         _recivedMessage = Encoding.UTF8.GetString(_receiveMessageResult.Buffer);
+                        Console.WriteLine($"Received {_recivedMessage}");
                         if(_recivedMessage == "Ready")
                         {
                             Console.WriteLine(_recivedMessage);
                             _cancellationTokenSource.Cancel();
                             Thread sendData = new Thread(() => 
                             {
-                                SendDataMessage("Hello", _messageEndPoint);
+                                SendDataMessage($"Hello {ServerName}", _messageEndPoint);
                             });
                             sendData.Start();
                         }
